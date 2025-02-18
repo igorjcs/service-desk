@@ -9,9 +9,9 @@ import java.util.List;
 import java.util.UUID;
 
 public interface TicketRepository extends JpaRepository<TicketModel, UUID> {
-    List<TicketDTO> findByStatus(TicketStatus status);
+    List<TicketModel> findByStatus(TicketStatus status);
 
-    TicketDTO findByDescription(String description);
+    TicketModel findByDescription(String description);
 
     boolean existsByDescriptionAndStatus (String description, TicketStatus status);
 

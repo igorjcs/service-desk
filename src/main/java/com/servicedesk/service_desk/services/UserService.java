@@ -4,9 +4,9 @@ import com.servicedesk.service_desk.dtos.UserDTO;
 import com.servicedesk.service_desk.models.UserModel;
 import com.servicedesk.service_desk.repositories.UserRepository;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
 
@@ -20,25 +20,27 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public ResponseEntity<String> registerUser (UserModel user){
-        if (userRepository.existsByUsername(user.getUsername())) {
-            throw new RuntimeException("Usuario ja existe!");
+    public void createUser (UserDTO userDTO){
+        if (userRepository.existsByUsername(userDTO.getUsername())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Usuario ja existe");
         }
-        // Criptografar senha antes de salvar
+
+        UserModel user = new UserModel();
+        user.setUsername(userDTO.getUsername());
+        user.setPassword(userDTO.getPassword());
+
+        user.setRole(userDTO.getRole());
+
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setRole(user.getRole());
 
-        UserModel savedUser = userRepository.save(user);
+        userRepository.save(user);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body("Usuario cadastrado");
     }
 
-    public void deleteUser(UUID id) {
+    public void deleteUser (UUID id){
         UserModel user = userRepository.findById(id)
-                .orElseThrow( () -> new RuntimeException("Usuario nao encontrado"));
+                .orElseThrow( () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario nao encontrado"));
         userRepository.delete(user);
     }
-
-
 
 }

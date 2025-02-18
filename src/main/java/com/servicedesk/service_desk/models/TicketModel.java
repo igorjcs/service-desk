@@ -32,10 +32,14 @@ public class TicketModel implements Serializable {
     @Column
     private TicketStatus status = TicketStatus.OPEN; // Padrao "aberto".
 
-    // OneToMany
-    @Column(nullable = false)
-    private UserModel user;
+    @ManyToOne
+    @JoinColumn(name = "users_id", nullable = false)
+    private UserModel users;
 
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime closedAt;
+
+    public TicketModel(String description) {
+        this.description = description;
+    }
 }
