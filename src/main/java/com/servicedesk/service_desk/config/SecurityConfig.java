@@ -1,5 +1,7 @@
 package com.servicedesk.service_desk.config;
 
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,10 +19,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @EnableWebSecurity
 @Configuration
+@SecurityScheme(name = SecurityConfig.SECURITY, type = SecuritySchemeType.HTTP, bearerFormat = "JWT", scheme = "bearer")
 public class SecurityConfig {
 
     @Autowired
     SecurityFilter securityFilter;
+
+
+    public static final String SECURITY = "bearerAuth";
 
     @Bean
     public SecurityFilterChain filterChain (HttpSecurity http) throws Exception{
@@ -29,9 +35,17 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
+                                .requestMatchers("v3/api-docs/**", "swagger-ui/**", "swagger-ui.html").permitAll()
+                                    // Rotas dos endpoints de login/registro
                                 .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                                .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
-                                .requestMatchers(HttpMethod.POST, "/tickets").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.POST, "/auth/register").hasRole("ADMIN")
+
+                                    // Rotas dos endpoints tickets
+                                .requestMatchers(HttpMethod.POST, "/tickets/create").hasAnyRole("ADMIN","USER")
+                                .requestMatchers(HttpMethod.DELETE, "/tickets").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/tickets").hasAnyRole("USER", "ADMIN")
+
+                                    // Qualquer outra requisicao, precisa de autenticacao
                                 .anyRequest().authenticated()
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)

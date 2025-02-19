@@ -30,7 +30,7 @@ public class TicketModel implements Serializable {
 
     @Enumerated(EnumType.STRING)
     @Column
-    private TicketStatus status = TicketStatus.OPEN; // Padrao "aberto".
+    private TicketStatus status;
 
     @ManyToOne
     @JoinColumn(name = "users_id", nullable = false)
@@ -39,7 +39,9 @@ public class TicketModel implements Serializable {
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime closedAt;
 
-    public TicketModel(String description) {
+    public TicketModel(String description, TicketStatus status,UserModel users) {
         this.description = description;
+        this.status = status;
+        this.users = users;
     }
 }

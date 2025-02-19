@@ -1,8 +1,8 @@
 package com.servicedesk.service_desk.models;
 
 public enum UserRole {
-    ADMIN("admin"),
-    USER("admin");
+    ADMIN("ROLE_ADMIN"),
+    USER("ROLE_USER");
 
     private String role;
 

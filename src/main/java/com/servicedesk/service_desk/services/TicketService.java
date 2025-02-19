@@ -9,6 +9,8 @@ import com.servicedesk.service_desk.repositories.TicketRepository;
 import com.servicedesk.service_desk.repositories.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -34,26 +36,39 @@ public class TicketService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Ja existe um chamado com essa descricao");
         }
 
-        if (ticket.getUsers() == null || ticket.getUsers().getId() == null){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Usuario nao pode ser nulo");
-        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
 
-        Optional<UserModel> userIsCreating = userRepository.findById(ticket.getUsers().getId());
-        if (userIsCreating.isEmpty()){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario nao encontrado");
-        }
+        UserModel user = userRepository.findByUsernameOpt(username)
+                .orElseThrow( () ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario nao encontraod")
+                );
 
-        UserModel user = userIsCreating.get();
-
-        TicketModel ticketModel= new TicketModel();
-        ticketModel.setDescription(ticket.getDescription());
-        ticketModel.setStatus(ticket.getStatus());
-        ticketModel.setUsers(user);
+        TicketModel ticketModel = new TicketModel(ticket.getDescription(), TicketStatus.OPEN, user);
         ticketModel.setCreatedAt(LocalDateTime.now());
 
         ticketRepository.save(ticketModel);
 
         return new TicketDTO(ticketModel);
+
+        // Modelo antigo.
+//        if (ticket.getUsers() == null || ticket.getUsers().getId() == null){
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Usuario nao pode ser nulo");
+//        }
+//
+//        Optional<UserModel> userIsCreating = userRepository.findById(ticket.getUsers().getId());
+//        if (userIsCreating.isEmpty()){
+//            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario nao encontrado");
+//        }
+//
+//        UserModel user = userIsCreating.get();
+//
+//        TicketModel ticketModel= new TicketModel(ticket.getDescription(), TicketStatus.OPEN, user);
+//        ticketModel.setCreatedAt(LocalDateTime.now());
+//
+//        ticketRepository.save(ticketModel);
+//
+//        return new TicketDTO(ticketModel);
 
     }
 
@@ -86,39 +101,19 @@ public class TicketService {
         return ResponseEntity.ok(ticketDTOs);
     }
 
-    public ResponseEntity<String> deleteTicket (UUID ticketId, UUID userId){
+    public ResponseEntity<String> deleteTicket (UUID ticketId){
         Optional<TicketModel> ticketOpt = ticketRepository.findById(ticketId);
 
-        // Verifica se chamado existe pelo ID passado
         if (ticketOpt.isEmpty()){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Chamado nao existe");
         }
 
-        // Guarda o chamado e o usuário criador do chamado
         TicketModel ticket = ticketOpt.get();
-        UserModel ticketUser = ticket.getUsers();
 
-        // Verifica se o usuário passado por ID existe
-        Optional<UserModel> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Usuario nao encontrado");
-        }
+        ticketRepository.delete(ticket);
 
-        // Guarda usuário passado por ID (caso exista)
-        UserModel user = userOpt.get();
-
-        // Verifica se usuário é criador do chamado ou um ADMIN
-        if (user.getRole() == UserRole.ADMIN || user.equals(ticketUser.getId())){
-            ticketRepository.delete(ticket);
-            return ResponseEntity.ok("Chamado deletado");
-        } else {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("Voce nao tem permissao para apagar esse chamado");
-        }
-
-
+        return ResponseEntity.ok("Chamado deletado");
     }
 
 
