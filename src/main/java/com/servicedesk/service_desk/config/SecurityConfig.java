@@ -35,15 +35,16 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                                .requestMatchers("v3/api-docs/**", "swagger-ui/**", "swagger-ui.html").permitAll()
-                                    // Rotas dos endpoints de login/registro
-                                .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                                    // Rotas do swagger
+                                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                                    // Rotas dos endpoints de autenticacao
                                 .requestMatchers(HttpMethod.POST, "/auth/register").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
 
                                     // Rotas dos endpoints tickets
                                 .requestMatchers(HttpMethod.POST, "/tickets/create").hasAnyRole("ADMIN","USER")
-                                .requestMatchers(HttpMethod.DELETE, "/tickets").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.GET, "/tickets").hasAnyRole("USER", "ADMIN")
+                                .requestMatchers(HttpMethod.DELETE, "/tickets/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/tickets/**").hasAnyRole("USER", "ADMIN")
 
                                     // Qualquer outra requisicao, precisa de autenticacao
                                 .anyRequest().authenticated()

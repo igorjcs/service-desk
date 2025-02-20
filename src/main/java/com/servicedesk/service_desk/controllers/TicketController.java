@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -31,23 +32,26 @@ public class TicketController {
     @ApiResponse(responseCode = "201", description = "Listados com sucesso")
     @ApiResponse(responseCode = "400", description = "Lista de chamados vazia")
     @ApiResponse(responseCode = "500", description = "Erro no servidor")
-    public HttpStatus getAll (){
-        ticketService.getAll();
+    public ResponseEntity<List<TicketDTO>> getAll (){
+        List<TicketDTO> tickets = ticketService.getAll();
 
-        return ResponseEntity.ok(HttpStatus.OK)
-                .getBody();
+        return ResponseEntity.ok(tickets);
     }
 
     // Endpoint para listar chamados por status
     @GetMapping("/list-status")
-    @Operation(summary = "Listar os chamados", description = "Método para listar chamados por status")
+    @Operation(summary = "Listar os chamados por status", description = "Método para listar chamados por status")
     @ApiResponse(responseCode = "201", description = "Listados com sucesso")
-    @ApiResponse(responseCode = "400", description = "Lista de chamados vazia")
+    @ApiResponse(responseCode = "204", description = "Lista de chamados com esse status vazia")
     @ApiResponse(responseCode = "500", description = "Erro no servidor")
-    public HttpStatus findByStatus (@RequestParam TicketStatus status){
-        ticketService.findByStatus(status);
-        return ResponseEntity.ok(HttpStatus.OK)
-                .getBody();
+    public ResponseEntity<List<TicketDTO>> findByStatus (@RequestParam TicketStatus status){
+        List<TicketDTO> tickets = ticketService.findByStatus(status);
+
+        if (tickets.isEmpty()){
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(tickets);
     }
 
     @PostMapping("/create")
@@ -61,8 +65,9 @@ public class TicketController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteTicket(@PathVariable UUID ticketId){
-        return ticketService.deleteTicket(ticketId);
+    @Operation(summary = "Deletar chamados passando ID", description = "Método para deletar chamados")
+    public ResponseEntity<String> deleteTicket(@PathVariable("id") UUID id){
+        return ticketService.deleteTicket(id);
     }
 
 }

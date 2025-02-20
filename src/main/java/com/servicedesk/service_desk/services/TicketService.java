@@ -4,7 +4,6 @@ import com.servicedesk.service_desk.dtos.TicketDTO;
 import com.servicedesk.service_desk.models.TicketModel;
 import com.servicedesk.service_desk.models.TicketStatus;
 import com.servicedesk.service_desk.models.UserModel;
-import com.servicedesk.service_desk.models.UserRole;
 import com.servicedesk.service_desk.repositories.TicketRepository;
 import com.servicedesk.service_desk.repositories.UserRepository;
 import org.springframework.http.HttpStatus;
@@ -39,37 +38,14 @@ public class TicketService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        UserModel user = userRepository.findByUsernameOpt(username)
-                .orElseThrow( () ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario nao encontraod")
-                );
-
-        TicketModel ticketModel = new TicketModel(ticket.getDescription(), TicketStatus.OPEN, user);
+        TicketModel ticketModel = new TicketModel(ticket.getDescription(), TicketStatus.OPEN);
         ticketModel.setCreatedAt(LocalDateTime.now());
+        ticketModel.setClosedAt(null);
+        ticketModel.setUsername(username);
 
         ticketRepository.save(ticketModel);
 
         return new TicketDTO(ticketModel);
-
-        // Modelo antigo.
-//        if (ticket.getUsers() == null || ticket.getUsers().getId() == null){
-//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Usuario nao pode ser nulo");
-//        }
-//
-//        Optional<UserModel> userIsCreating = userRepository.findById(ticket.getUsers().getId());
-//        if (userIsCreating.isEmpty()){
-//            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario nao encontrado");
-//        }
-//
-//        UserModel user = userIsCreating.get();
-//
-//        TicketModel ticketModel= new TicketModel(ticket.getDescription(), TicketStatus.OPEN, user);
-//        ticketModel.setCreatedAt(LocalDateTime.now());
-//
-//        ticketRepository.save(ticketModel);
-//
-//        return new TicketDTO(ticketModel);
-
     }
 
     public List<TicketDTO> getAll(){
@@ -86,23 +62,20 @@ public class TicketService {
         return ticketsDTOs;
     }
 
-    public ResponseEntity<List<TicketDTO>> findByStatus(TicketStatus status){
+    public List<TicketDTO> findByStatus(TicketStatus status){
         List<TicketModel> tickets = ticketRepository.findByStatus(status);
 
         if (tickets.isEmpty()){
-            return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                    .body(new ArrayList<>());
+            return new ArrayList<>();
         }
 
-        List<TicketDTO> ticketDTOs = tickets.stream()
-                .map(ticket -> new TicketDTO(ticket))
+        return tickets.stream()
+                .map(TicketDTO::new)
                 .toList();
-
-        return ResponseEntity.ok(ticketDTOs);
     }
 
-    public ResponseEntity<String> deleteTicket (UUID ticketId){
-        Optional<TicketModel> ticketOpt = ticketRepository.findById(ticketId);
+    public ResponseEntity<String> deleteTicket (UUID id){
+        Optional<TicketModel> ticketOpt = ticketRepository.findById(id);
 
         if (ticketOpt.isEmpty()){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

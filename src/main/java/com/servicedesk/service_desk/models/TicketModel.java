@@ -32,16 +32,17 @@ public class TicketModel implements Serializable {
     @Column
     private TicketStatus status;
 
-    @ManyToOne
-    @JoinColumn(name = "users_id", nullable = false)
-    private UserModel users;
+    @Column(nullable = false)
+    private String username;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
     private LocalDateTime closedAt;
 
-    public TicketModel(String description, TicketStatus status,UserModel users) {
+    public TicketModel(String description, TicketStatus status) {
         this.description = description;
         this.status = status;
-        this.users = users;
+        this.username = getUsername();
+        this.createdAt = getCreatedAt();
+        this.closedAt = getClosedAt();
     }
 }
