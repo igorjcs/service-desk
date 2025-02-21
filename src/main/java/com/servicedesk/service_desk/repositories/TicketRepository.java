@@ -15,4 +15,5 @@ public interface TicketRepository extends JpaRepository<TicketModel, UUID> {
 
     boolean existsByDescriptionAndStatus (String description, TicketStatus status);
 
+
 }

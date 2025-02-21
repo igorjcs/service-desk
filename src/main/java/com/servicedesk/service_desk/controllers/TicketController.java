@@ -64,6 +64,17 @@ public class TicketController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTicket);
     }
 
+    @PutMapping("/close/{id}")
+    @Operation(summary = "Fechar chamados", description = "Método para fechar chamados abertos")
+    public ResponseEntity<String> closeTicket(@PathVariable UUID id){
+        boolean closed = ticketService.closeTicket(id);
+        if (closed){
+            return ResponseEntity.ok("Chamado fechado com sucesso!");
+        } else {
+            return ResponseEntity.badRequest().body("Chamado nao encontrado");
+        }
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Deletar chamados passando ID", description = "Método para deletar chamados")
     public ResponseEntity<String> deleteTicket(@PathVariable("id") UUID id){

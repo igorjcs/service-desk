@@ -48,6 +48,20 @@ public class TicketService {
         return new TicketDTO(ticketModel);
     }
 
+    public boolean closeTicket(UUID id){
+        Optional<TicketModel> optTicket = ticketRepository.findById(id);
+
+        if (optTicket.isPresent()){
+            TicketModel ticket = optTicket.get();
+            if (!ticket.getStatus().equals(TicketStatus.CLOSED)){
+                ticket.setStatus(TicketStatus.CLOSED);
+                ticketRepository.save(ticket);
+                return true;
+            }
+        }
+        return false;
+    }
+
     public List<TicketDTO> getAll(){
         List<TicketModel> tickets = ticketRepository.findAll();
         List<TicketDTO> ticketsDTOs = new ArrayList<>();
