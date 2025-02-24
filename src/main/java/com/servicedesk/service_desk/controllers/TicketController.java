@@ -27,13 +27,26 @@ public class TicketController {
         this.ticketService = ticketService;
     }
 
+    @GetMapping("/queue")
+    @Operation(summary = "Fila de chamados", description = "Fila de chamados")
+    public ResponseEntity<List<TicketDTO>> getTicketsQueue(){
+        List<TicketDTO> ticketsInQueue = ticketService.getAllTicketsInQueue();
+
+        if (ticketsInQueue.isEmpty()){
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(ticketsInQueue);
+    }
+
     @GetMapping("/list")
     @Operation(summary = "Listar os chamados", description = "Método para listar chamados")
-    @ApiResponse(responseCode = "201", description = "Listados com sucesso")
-    @ApiResponse(responseCode = "400", description = "Lista de chamados vazia")
-    @ApiResponse(responseCode = "500", description = "Erro no servidor")
     public ResponseEntity<List<TicketDTO>> getAll (){
         List<TicketDTO> tickets = ticketService.getAll();
+
+        if (tickets.isEmpty()){
+            return ResponseEntity.noContent().build();
+        }
 
         return ResponseEntity.ok(tickets);
     }
@@ -41,9 +54,6 @@ public class TicketController {
     // Endpoint para listar chamados por status
     @GetMapping("/list-status")
     @Operation(summary = "Listar os chamados por status", description = "Método para listar chamados por status")
-    @ApiResponse(responseCode = "201", description = "Listados com sucesso")
-    @ApiResponse(responseCode = "204", description = "Lista de chamados com esse status vazia")
-    @ApiResponse(responseCode = "500", description = "Erro no servidor")
     public ResponseEntity<List<TicketDTO>> findByStatus (@RequestParam TicketStatus status){
         List<TicketDTO> tickets = ticketService.findByStatus(status);
 
@@ -57,8 +67,6 @@ public class TicketController {
     @PostMapping("/create")
     @Operation(summary = "Criar um chamado", description = "Método para criar chamados")
     @ApiResponse(responseCode = "201", description = "Chamado criado com sucesso")
-    @ApiResponse(responseCode = "400", description = "Chamado ja existente")
-    @ApiResponse(responseCode = "500", description = "Erro no servidor")
     public ResponseEntity<TicketDTO> createTicket(@RequestBody TicketDTO ticket){
         TicketDTO createdTicket = ticketService.createTicket(ticket);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTicket);
