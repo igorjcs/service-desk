@@ -45,6 +45,7 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.POST, "/tickets/create").hasAnyRole("ADMIN","USER")
                                 .requestMatchers(HttpMethod.DELETE, "/tickets/**").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.GET, "/tickets/**").hasAnyRole("USER", "ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/tickets/queue").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.PUT, "/tickets/close/**").hasRole("ADMIN")
 
                                     // Qualquer outra requisicao, precisa de autenticacao

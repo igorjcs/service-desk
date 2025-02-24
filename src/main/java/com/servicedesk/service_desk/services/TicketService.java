@@ -23,10 +23,12 @@ import java.util.UUID;
 public class TicketService {
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
+    private final TicketQueue ticketQueue;
 
-    public TicketService(TicketRepository ticketRepository, UserRepository userRepository) {
+    public TicketService(TicketRepository ticketRepository, UserRepository userRepository, TicketQueue ticketQueue) {
         this.ticketRepository = ticketRepository;
         this.userRepository = userRepository;
+        this.ticketQueue = ticketQueue;
     }
 
     public TicketDTO createTicket (TicketDTO ticket){
@@ -45,7 +47,10 @@ public class TicketService {
 
         ticketRepository.save(ticketModel);
 
-        return new TicketDTO(ticketModel);
+        TicketDTO ticketDTO = new TicketDTO(ticketModel);
+        ticketQueue.addTicket(ticketDTO);
+
+        return ticketDTO;
     }
 
     public boolean closeTicket(UUID id){
@@ -55,25 +60,31 @@ public class TicketService {
             TicketModel ticket = optTicket.get();
             if (!ticket.getStatus().equals(TicketStatus.CLOSED)){
                 ticket.setStatus(TicketStatus.CLOSED);
+                ticket.setClosedAt(LocalDateTime.now());
                 ticketRepository.save(ticket);
+
+                ticketQueue.removeTicketById(id);
+
                 return true;
             }
         }
         return false;
     }
 
+    public List<TicketDTO> getAllTicketsInQueue(){
+        return ticketQueue.getQueue();
+    }
+
     public List<TicketDTO> getAll(){
         List<TicketModel> tickets = ticketRepository.findAll();
-        List<TicketDTO> ticketsDTOs = new ArrayList<>();
 
         if (tickets.isEmpty()){
             return new ArrayList<>();
         }
 
-        for (TicketModel ticket : tickets){
-            ticketsDTOs.add(new TicketDTO(ticket));
-        }
-        return ticketsDTOs;
+        return tickets.stream()
+                .map(TicketDTO::new)
+                .toList();
     }
 
     public List<TicketDTO> findByStatus(TicketStatus status){
